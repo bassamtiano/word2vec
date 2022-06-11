@@ -4,7 +4,8 @@ if __name__ == "__main__":
     pre = Preprocessor(max_length = 100, 
                        cased = False, 
                        wiki_dataset_dir = "datasets/ind_wikipedia_2021_1M-sentences.txt",
-                       csv_dataset_dir = "datasets/Indonesian Sentiment Twitter Dataset Labeled.csv")
+                       csv_dataset_dir = "datasets/Indonesian Sentiment Twitter Dataset Labeled.csv",
+                       conllu_dataset_dir = "datasets/id_gsd-ud-train.conllu")
     pre.preprocessor()
 
     # cleaned = pre.clean_sentence("Apakah ini adalah kalimat?")

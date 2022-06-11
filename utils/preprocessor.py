@@ -4,11 +4,14 @@ import re
 from tqdm import tqdm
 import csv
 
+from conllu import parse_incr
+
 class Preprocessor():
     def __init__(self,
                  max_length,
                  wiki_dataset_dir,
                  csv_dataset_dir,
+                 conllu_dataset_dir,
                  cased) -> None:
 
         # Object Class untuk vocab
@@ -27,6 +30,7 @@ class Preprocessor():
 
         self.wiki_dataset_dir = wiki_dataset_dir
         self.csv_dataset_dir = csv_dataset_dir
+        self.conllu_dataset_dir = conllu_dataset_dir
 
     def clean_sentence(self, sentence):
         # Membersihkan dari karakter tidak standard
@@ -56,8 +60,6 @@ class Preprocessor():
         return sentence.strip()
 
     def load_wiki(self):
-        sentences = []
-
         with open(self.wiki_dataset_dir, "r", encoding="utf-8") as rd:
             for i, line in enumerate(tqdm(rd)):
                 item = line.split("\t")
@@ -68,25 +70,33 @@ class Preprocessor():
                     break
 
     def load_twitter(self):
-        sentences = []
-
         with open(self.csv_dataset_dir, "r", encoding="utf-8") as f:
             next(f)
             rd = csv.reader(f, delimiter='t')
-            for line in tqdm(rd):
+            for i, line in enumerate(tqdm(rd)):
                 item = ''.join(line).split("\t")
                 sentence = self.clean_sentence(item[1])
+                self.prepare_corpus(sentence)
 
-                print(sentence)
-                sys.exit()
-                sentences.append(sentence)
-        
+                if i > 10 :
+                    break
+    
+    def load_conllu(self):
+        with open(self.conllu_dataset_dir, "r", encoding="utf-8") as f:
+            rd = parse_incr(f)
+            for i, line in enumerate(tqdm(rd)):
+                item = line.metadata['text']
+                sentence = self.clean_sentence(item)
+                sentence = self.clean_sentence(item[1])
+                self.prepare_corpus(sentence)
 
+                if i > 10 :
+                    break
 
     def preprocessor(self):
-        
+        self.load_wiki()
         self.load_twitter()
-        
+        # self.load_conllu()
         
         self.word2idx = {w: idx for (idx, w) in enumerate(self.vocab)}
         self.idx2word = {idx: w for (idx, w) in enumerate(self.vocab)}
