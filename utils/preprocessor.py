@@ -87,7 +87,6 @@ class Preprocessor():
             for i, line in enumerate(tqdm(rd)):
                 item = line.metadata['text']
                 sentence = self.clean_sentence(item)
-                sentence = self.clean_sentence(item[1])
                 self.prepare_corpus(sentence)
 
                 if i > 10 :
@@ -96,7 +95,7 @@ class Preprocessor():
     def preprocessor(self):
         self.load_wiki()
         self.load_twitter()
-        # self.load_conllu()
+        self.load_conllu()
         
         self.word2idx = {w: idx for (idx, w) in enumerate(self.vocab)}
         self.idx2word = {idx: w for (idx, w) in enumerate(self.vocab)}
@@ -124,7 +123,6 @@ class Preprocessor():
         # Create clean corpus
         self.corpus.append(token)
 
-    
     def tokenizer(self):
         for cp in self.corpus:
             tkn = []
