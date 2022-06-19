@@ -2,9 +2,19 @@ import pickle
 import sys
 import re
 from tqdm import tqdm
+
+import torch
+
 import csv
 
+import random
+import numpy as np
+
 from conllu import parse_incr
+
+from sklearn.model_selection import train_test_split
+
+from torch.utils.data import TensorDataset, DataLoader
 
 class Preprocessor():
     def __init__(self,
@@ -12,6 +22,7 @@ class Preprocessor():
                  wiki_dataset_dir,
                  csv_dataset_dir,
                  conllu_dataset_dir,
+                 batch_size,
                  cased) -> None:
 
         # Object Class untuk vocab
@@ -23,6 +34,8 @@ class Preprocessor():
         self.max_length = max_length
         self.cased = cased
 
+        self.batch_size = batch_size
+
         self.corpus = []
         # Corpus = Saya, Telah, Makan
 
@@ -32,10 +45,11 @@ class Preprocessor():
         self.csv_dataset_dir = csv_dataset_dir
         self.conllu_dataset_dir = conllu_dataset_dir
 
+        self.device = torch.device('cpu')
+
     def clean_sentence(self, sentence):
         # Membersihkan dari karakter tidak standard
         sentence = re.sub(r"[^A-Za-z(),!?\'\`]", " ", sentence)
-
 
         sentence = re.sub(r"\'s", " \'s", sentence)
         sentence = re.sub(r"\'ve", " \'ve", sentence)
@@ -66,7 +80,7 @@ class Preprocessor():
                 sentence = self.clean_sentence(item[1])
                 self.prepare_corpus(sentence)
 
-                if i > 10 :
+                if i > 1000 :
                     break
 
     def load_twitter(self):
@@ -78,7 +92,7 @@ class Preprocessor():
                 sentence = self.clean_sentence(item[1])
                 self.prepare_corpus(sentence)
 
-                if i > 10 :
+                if i > 1000 :
                     break
     
     def load_conllu(self):
@@ -89,7 +103,7 @@ class Preprocessor():
                 sentence = self.clean_sentence(item)
                 self.prepare_corpus(sentence)
 
-                if i > 10 :
+                if i > 1000 :
                     break
 
     def preprocessor(self):
@@ -111,7 +125,41 @@ class Preprocessor():
 
         self.tokenizer()
 
+        # total baris dari dataset
+        dataset_len = len(self.tokens)
 
+
+        ratio_training = round(0.75 * dataset_len)
+        ratio_valid = round(0.1 * dataset_len)
+        ratio_test = round(0.15 * dataset_len)
+
+        total_ratio = ratio_training + ratio_valid + ratio_test
+
+
+        if total_ratio != dataset_len:
+            print("Size tidak sama")
+            sys.exit()
+
+        shuffled_data = random.sample(self.tokens, len(self.tokens))
+        
+        train_data = torch.tensor(shuffled_data[:ratio_training])
+        valid_data = torch.tensor(shuffled_data[ratio_training:ratio_training + ratio_valid])
+        test_data = torch.tensor(shuffled_data[:ratio_test])
+
+        train_data = train_data.to(self.device)
+        valid_data = valid_data.to(self.device)
+        test_data = test_data.to(self.device)
+
+        train_data = TensorDataset(train_data)
+        valid_data = TensorDataset(valid_data)
+        test_data = TensorDataset(test_data)
+
+        train_loader = DataLoader(train_data, shuffle = True, batch_size = self.batch_size)
+        valid_loader = DataLoader(valid_data, shuffle = True, batch_size = self.batch_size)
+        test_loader = DataLoader(test_data, shuffle = False, batch_size = self.batch_size)
+
+        return len(self.vocab), self.word2idx, self.idx2word, train_loader, valid_loader, test_loader
+        
     def prepare_corpus(self, sentence):
         token = sentence.split(" ")
         # Create Vocab
@@ -135,9 +183,5 @@ class Preprocessor():
             elif len(tkn) > self.max_length:
                 tkn = tkn[:self.max_length]
             
-            print("Size : ", len(tkn))
-            
             self.tokens.append(tkn)
             
-
-        print(len(self.tokens))
