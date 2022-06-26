@@ -23,7 +23,7 @@ class W2VTrainer(pl.LightningModule):
                                embed_max_norm)
 
         self.lr = lr
-        print(self.cbow_model)
+        self.criterion = nn.BCELoss()
 
 
     def configure_optimizers(self):
@@ -37,7 +37,6 @@ class W2VTrainer(pl.LightningModule):
         
         output = self.cbow_model(x)
         print(output)
-        sys.exit()
 
 
     # def validation_step(self, valid_batch, batch_idx)
