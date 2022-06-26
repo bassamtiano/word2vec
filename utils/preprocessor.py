@@ -125,6 +125,8 @@ class Preprocessor():
 
         self.tokenizer()
 
+        
+
         # total baris dari dataset
         dataset_len = len(self.tokens)
 
@@ -158,7 +160,7 @@ class Preprocessor():
         valid_loader = DataLoader(valid_data, shuffle = True, batch_size = self.batch_size)
         test_loader = DataLoader(test_data, shuffle = False, batch_size = self.batch_size)
 
-        return len(self.vocab), self.word2idx, self.idx2word, train_loader, valid_loader, test_loader
+        return len(self.vocab), self.word2idx, self.idx2word, train_loader, valid_loader, test_loader, self.tokens
         
     def prepare_corpus(self, sentence):
         token = sentence.split(" ")
